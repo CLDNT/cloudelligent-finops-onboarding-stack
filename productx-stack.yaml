@@ -56,10 +56,10 @@ Conditions:
       - ''
 
 Resources:
-  ProductXWAFRRole:
+  ProductXRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ProductXWAFRRole
+      RoleName: ProductXRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -85,7 +85,7 @@ Resources:
         - arn:aws:iam::aws:policy/SecurityAudit
         - arn:aws:iam::aws:policy/ReadOnlyAccess
       Policies:
-        - PolicyName: WAFRWorkloadManagement
+        - PolicyName: ProductXWellarchitectedPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -181,13 +181,13 @@ Resources:
           - !Ref AWS::NoValue
         - !If
           - IsOrg
-          - PolicyName: ProductXWAFRAssumeMemberRoles
+          - PolicyName: ProductXAssumeMemberRoles
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action: sts:AssumeRole
-                  Resource: arn:aws:iam::*:role/ProductXWAFRMemberRole
+                  Resource: arn:aws:iam::*:role/ProductXMemberRole
                   Condition:
                     StringEquals:
                       sts:ExternalId: !Ref ExternalId
@@ -352,13 +352,13 @@ Resources:
                 Resource:
                   - arn:aws:cur:*:*:definition/reserved-ai-*
 
-  ProductXWAFRMemberRoleStackSet:
+  ProductXMemberRoleStackSet:
     Type: AWS::CloudFormation::StackSet
     Condition: IsOrg
-    DependsOn: ProductXWAFRRole
+    DependsOn: ProductXRole
     Properties:
-      StackSetName: ProductXWAFRMemberRoleStackSet
-      Description: Deploys ProductXWAFRMemberRole to organization member accounts.
+      StackSetName: ProductXMemberRoleStackSet
+      Description: Deploys ProductXMemberRole to organization member accounts.
       PermissionModel: SERVICE_MANAGED
       CallAs: SELF
       AutoDeployment:
@@ -387,7 +387,7 @@ Resources:
             - !Ref AWS::Region
       TemplateBody: |
         AWSTemplateFormatVersion: '2010-09-09'
-        Description: ProductX WAFR member account read-only role (StackSet-deployed).
+        
 
         Parameters:
           ManagementAccountId:
@@ -395,25 +395,17 @@ Resources:
           ExternalId:
             Type: String
             NoEcho: true
-          Environment:
-            Type: String
-          Owner:
-            Type: String
 
         Resources:
-          ProductXWAFRMemberRole:
+          ProductXMemberRole:
             Type: AWS::IAM::Role
             Properties:
-              RoleName: ProductXWAFRMemberRole
+              RoleName: ProductXMemberRole
               Tags:
                 - Key: Project
                   Value: productx
-                - Key: Environment
-                  Value: !Ref Environment
                 - Key: ManagedBy
                   Value: cloudformation
-                - Key: Owner
-                  Value: !Ref Owner
               AssumeRolePolicyDocument:
                 Version: '2012-10-17'
                 Statement:
@@ -424,7 +416,7 @@ Resources:
                     Condition:
                       StringEquals:
                         sts:ExternalId: !Ref ExternalId
-                        aws:PrincipalArn: !Sub 'arn:aws:iam::${ManagementAccountId}:role/ProductXWAFRRole'
+                        aws:PrincipalArn: !Sub 'arn:aws:iam::${ManagementAccountId}:role/ProductXRole'
                   - Effect: Allow
                     Principal:
                       AWS: "282762468439"
@@ -436,7 +428,7 @@ Resources:
                 - arn:aws:iam::aws:policy/SecurityAudit
                 - arn:aws:iam::aws:policy/ReadOnlyAccess
               Policies:
-                - PolicyName: WAFRWorkloadManagement
+                - PolicyName: ProductXWellarchitectedPolicy
                   PolicyDocument:
                     Version: '2012-10-17'
                     Statement:
@@ -482,8 +474,8 @@ Resources:
 
         Outputs:
           MemberRoleArn:
-            Value: !GetAtt ProductXWAFRMemberRole.Arn
+            Value: !GetAtt ProductXMemberRole.Arn
 
 Outputs:
   RoleArn:
-    Value: !GetAtt ProductXWAFRRole.Arn
+    Value: !GetAtt ProductXRole.Arn
